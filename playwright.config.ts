@@ -9,6 +9,7 @@ export default defineConfig({
   reporter: [["html", { open: "never" }], ["list"]],
   use: {
     baseURL: "https://www.saucedemo.com/", // Cambiar por tu ambiente QA/sandbox
+    testIdAttribute: "data-test",
     trace: "on", // Mantiene el trace ante reintentos o fallos ('on' para forzar siempre)
     screenshot: "only-on-failure", // Captura pantalla automáticamente si falla el test
     video: "retain-on-failure",

@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { InventoryPage } from "../pages/InventoryPage";
 import { LoginPage } from "../pages/LoginPage";
+import { PdpPage } from "../pages/pdp.page";
 
 const standardUsername = process.env.SAUCEDEMO_USERNAME ?? "standard_user";
 const standardPassword = process.env.SAUCEDEMO_PASSWORD ?? "secret_sauce";
@@ -10,10 +11,12 @@ const blockedUsername =
 test.describe("SauceDemo", () => {
   let loginPage: LoginPage;
   let inventoryPage: InventoryPage;
+  let pdpPage: PdpPage;
 
   test.beforeEach(async ({ page }) => {
     loginPage = new LoginPage(page);
     inventoryPage = new InventoryPage(page);
+    pdpPage = new PdpPage(page);
     await loginPage.open();
   });
 
@@ -35,12 +38,8 @@ test.describe("SauceDemo", () => {
     await inventoryPage.openFirstProduct();
 
     await expect(page).toHaveURL(/\/inventory-item\.html\?id=\d+$/);
-    await expect(page.getByTestId("inventory-item-name")).toHaveText(
-      expectedName,
-    );
-    await expect(page.getByTestId("inventory-item-price")).toHaveText(
-      expectedPrice,
-    );
+    await expect(pdpPage.productName).toHaveText(expectedName);
+    await expect(pdpPage.productPrice).toHaveText(expectedPrice);
   });
 
   test("CP-03: cierra sesión correctamente", async ({ page }) => {

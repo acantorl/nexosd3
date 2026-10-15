@@ -7,6 +7,7 @@ export class LoginPage extends BasePage {
   readonly loginButton: Locator;
   readonly errorMessage: Locator;
   readonly dismissErrorButton: Locator;
+  readonly titleSpan: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -15,6 +16,7 @@ export class LoginPage extends BasePage {
     this.loginButton = page.getByRole("button", { name: "Login" });
     this.errorMessage = page.getByTestId("error");
     this.dismissErrorButton = page.getByTestId("error-button");
+    this.titleSpan = page.getByTestId("title");
   }
 
   async open(): Promise<void> {
@@ -33,6 +35,10 @@ export class LoginPage extends BasePage {
   async login(username: string, password: string): Promise<void> {
     await this.fillCredentials(username, password);
     await this.submit();
+  }
+
+  async openSession(username: string, password: string): Promise<void> {
+    await this.login(username, password);
   }
 
   async dismissError(): Promise<void> {

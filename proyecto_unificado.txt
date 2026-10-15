@@ -1,0 +1,1010 @@
+C:\workspace\js_ts\nexosd3\.vscode\mcp.json
+{
+  "servers": {
+    "playwright-test": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "playwright",
+        "run-test-mcp-server"
+      ]
+    }
+  },
+  "inputs": []
+}
+
+
+C:\workspace\js_ts\nexosd3\data\login.data.ts
+export const validUser = {
+  user: "standard_user",
+  password: "secret_sauce",
+};
+
+export const invalidUser = {
+  user: "error_user",
+  password: "secret_sauce",
+};
+
+export const blockUser = {
+  user: "locked_out_user",
+  password: "secret_sauce",
+};
+
+export const emptyUser = {
+  user: "",
+  password: "",
+};
+
+
+
+C:\workspace\js_ts\nexosd3\pages\base.page.ts
+import { Page } from "@playwright/test";
+
+export class BasePage {
+  readonly page: Page;
+
+  constructor(page: Page) {
+    this.page = page;
+  }
+
+  async navigateTo(path: string): Promise<void> {
+    await this.page.goto(path);
+  }
+}
+
+
+
+C:\workspace\js_ts\nexosd3\pages\dashboard.page.ts
+import { Page, Locator } from "@playwright/test";
+import { BasePage } from "./base.page";
+
+export class DashboardPage extends BasePage {
+  readonly menuBtn: Locator;
+  readonly logOutInput: Locator;
+  readonly filterBtn: Locator;
+  readonly itemFiveProduct: Locator;
+
+  constructor(page: Page) {
+    super(page);
+
+    this.menuBtn = page.locator("#react-burger-menu-btn");
+    this.logOutInput = page.locator("#logout_sidebar_link");
+    this.filterBtn = page.locator('[data-test="product-sort-container"]');
+
+    this.itemFiveProduct = page.locator("#item_5_title_link");
+  }
+
+  async closedSession(): Promise<void> {
+    await this.menuBtn.click();
+    await this.logOutInput.click();
+  }
+
+  async searchProduct(): Promise<void> {
+    await this.filterBtn.selectOption("hilo");
+    await this.itemFiveProduct.click();
+  }
+}
+
+
+
+C:\workspace\js_ts\nexosd3\pages\InventoryPage.ts
+import { Locator, Page } from "@playwright/test";
+import { BasePage } from "./base.page";
+
+export class InventoryPage extends BasePage {
+  readonly menuButton: Locator;
+  readonly logoutLink: Locator;
+  readonly productList: Locator;
+  readonly productCards: Locator;
+  readonly productFilter: Locator;
+  readonly firstProduct: Locator;
+
+  constructor(page: Page) {
+    super(page);
+
+    this.menuButton = page.getByRole("button", { name: "Open Menu" });
+    this.logoutLink = page.locator("#logout_sidebar_link");
+    this.productList = page.getByTestId("inventory-list");
+    this.productCards = page.getByTestId("inventory-item");
+    this.productFilter = page.getByTestId("product-sort-container");
+    this.firstProduct = this.productCards.first();
+  }
+
+  async openMenu(): Promise<void> {
+    await this.menuButton.click();
+  }
+
+  async logout(): Promise<void> {
+    await this.openMenu();
+    await this.logoutLink.click();
+  }
+
+  async selectProductSort(option: string): Promise<void> {
+    await this.productFilter.selectOption(option);
+  }
+
+  async sortByPriceHighToLow(): Promise<void> {
+    await this.selectProductSort("hilo");
+  }
+
+  async firstProductName(): Promise<string> {
+    return (
+      await this.firstProduct.getByTestId("inventory-item-name").innerText()
+    ).trim();
+  }
+
+  async firstProductPrice(): Promise<string> {
+    return (
+      await this.firstProduct.getByTestId("inventory-item-price").innerText()
+    ).trim();
+  }
+
+  async openFirstProduct(): Promise<void> {
+    await this.firstProduct.getByTestId("inventory-item-name").click();
+  }
+
+  productByName(name: string): Locator {
+    return this.productCards.filter({ hasText: name });
+  }
+}
+
+
+
+C:\workspace\js_ts\nexosd3\pages\login.page.ts
+import { Page, Locator } from "@playwright/test";
+import { BasePage } from "./base.page";
+
+export class LoginPage extends BasePage {
+  readonly usernameInput: Locator;
+  readonly passwordInput: Locator;
+  readonly loginButton: Locator;
+  readonly titleSpan: Locator;
+
+  constructor(page: Page) {
+    super(page);
+    this.usernameInput = page.locator("#user-name");
+    this.passwordInput = page.locator("#password");
+    this.loginButton = page.locator("#login-button");
+    this.titleSpan = page.locator('[data-test="title"]');
+  }
+
+  async openSession(user: string, pass: string): Promise<void> {
+    await this.usernameInput.fill(user);
+    await this.passwordInput.fill(pass);
+    await this.loginButton.click();
+  }
+}
+
+
+
+C:\workspace\js_ts\nexosd3\pages\LoginPage.ts
+import { Locator, Page } from "@playwright/test";
+import { BasePage } from "./base.page";
+
+export class LoginPage extends BasePage {
+  readonly usernameInput: Locator;
+  readonly passwordInput: Locator;
+  readonly loginButton: Locator;
+  readonly errorMessage: Locator;
+  readonly dismissErrorButton: Locator;
+
+  constructor(page: Page) {
+    super(page);
+    this.usernameInput = page.getByPlaceholder("Username");
+    this.passwordInput = page.getByPlaceholder("Password");
+    this.loginButton = page.getByRole("button", { name: "Login" });
+    this.errorMessage = page.getByTestId("error");
+    this.dismissErrorButton = page.getByTestId("error-button");
+  }
+
+  async open(): Promise<void> {
+    await this.navigateTo("/");
+  }
+
+  async fillCredentials(username: string, password: string): Promise<void> {
+    await this.usernameInput.fill(username);
+    await this.passwordInput.fill(password);
+  }
+
+  async submit(): Promise<void> {
+    await this.loginButton.click();
+  }
+
+  async login(username: string, password: string): Promise<void> {
+    await this.fillCredentials(username, password);
+    await this.submit();
+  }
+
+  async dismissError(): Promise<void> {
+    await this.dismissErrorButton.click();
+  }
+}
+
+
+
+C:\workspace\js_ts\nexosd3\pages\pdp.page.ts
+import { Page, Locator } from "@playwright/test";
+import { BasePage } from "./base.page";
+
+export class PdpPage extends BasePage {
+  readonly backProductsBtn: Locator;
+  readonly addCartPdpBtn: Locator;
+  readonly productName: Locator;
+
+  constructor(page: Page) {
+    super(page);
+
+    this.backProductsBtn = page.locator("#back-to-products");
+    this.addCartPdpBtn = page.locator("#add-to-cart");
+    this.productName = page.locator(".inventory_details_name");
+  }
+
+  async addCart(): Promise<void> {
+    await this.addCartPdpBtn.click();
+  }
+}
+
+
+
+C:\workspace\js_ts\nexosd3\tests\e2e-flow.spec.ts
+import { test, expect } from "@playwright/test";
+import { LoginPage } from "../pages/login.page";
+import { DashboardPage } from "../pages/dashboard.page";
+import { PdpPage } from "../pages/pdp.page";
+import { validUser } from "../data/login.data";
+
+test.describe("Feature: End to End Flow", () => {
+  test("Scenario: Successful E2E Flow - Login, Select Product and Logout", async ({
+    page,
+  }) => {
+    const loginPage = new LoginPage(page);
+    const dashboardPage = new DashboardPage(page);
+    const pdpPage = new PdpPage(page);
+
+    // 1. Login
+    await loginPage.navigateTo("https://www.saucedemo.com");
+    await loginPage.openSession(validUser.user, validUser.password);
+    await expect(loginPage.titleSpan).toHaveText("Products");
+
+    // 2. Búsqueda / Selección de producto e inspección en PDP
+    await dashboardPage.searchProduct();
+    await expect(pdpPage.backProductsBtn).toBeVisible();
+
+    // Regresar al dashboard para el cierre de sesión
+    await pdpPage.backProductsBtn.click();
+
+    // 3. Logout
+    await dashboardPage.closedSession();
+    await expect(page).toHaveURL("https://www.saucedemo.com/");
+  });
+});
+
+
+
+C:\workspace\js_ts\nexosd3\tests\login.negative.spec.ts
+import { test, expect } from "@playwright/test";
+import { LoginPage } from "../pages/login.page";
+import { emptyUser, invalidUser } from "../data/login.data";
+
+test.describe("Feature: Casos Negativos de Login", () => {
+  test("Scenario: Intento de inicio de sesión con usuario bloqueado", async ({
+    page,
+  }) => {
+    const loginPage = new LoginPage(page);
+
+    await loginPage.navigateTo("https://www.saucedemo.com");
+    await loginPage.openSession("locked_out_user", "secret_sauce");
+
+    const errorMessage = page.locator('[data-test="error"]');
+    await expect(errorMessage).toBeVisible();
+    await expect(errorMessage).toContainText(
+      "Epic sadface: Sorry, this user has been locked out.",
+    );
+  });
+
+  test("Scenario: Attempt to log in with an empty user", async ({ page }) => {
+    const loginPage = new LoginPage(page);
+
+    await loginPage.navigateTo("https://www.saucedemo.com");
+    await loginPage.openSession(emptyUser.user, emptyUser.password);
+
+    const errorMessage = page.locator('[data-test="error"]');
+    await expect(errorMessage).toBeVisible();
+    await expect(errorMessage).toContainText(
+      "Epic sadface: Username is required",
+    );
+  });
+});
+
+
+
+C:\workspace\js_ts\nexosd3\tests\login.spec.ts
+import { test, expect } from "@playwright/test";
+import { LoginPage } from "../pages/login.page";
+import { validUser } from "../data/login.data";
+
+test.describe("Feature: Login", () => {
+  test(`Scenario: Successful Login for user ${validUser.user}`, async ({
+    page,
+  }) => {
+    const loginPage = new LoginPage(page);
+
+    await loginPage.navigateTo("https://www.saucedemo.com");
+    await loginPage.openSession(validUser.user, validUser.password);
+
+    await expect(loginPage.titleSpan).toHaveText("Products");
+  });
+});
+
+
+
+C:\workspace\js_ts\nexosd3\tests\logout.spec.ts
+import { test, expect } from "@playwright/test";
+import { LoginPage } from "../pages/login.page";
+import { validUser } from "../data/login.data";
+import { DashboardPage } from "../pages/dashboard.page";
+
+test.describe("Feature: Logut", () => {
+  test(`Scenario: Successful Logout for user ${validUser.user}`, async ({
+    page,
+  }) => {
+    const loginPage = new LoginPage(page);
+    const dashboard = new DashboardPage(page);
+
+    await loginPage.navigateTo("https://www.saucedemo.com");
+    await loginPage.openSession(validUser.user, validUser.password);
+    await dashboard.closedSession();
+
+    await expect(page).toHaveURL(/saucedemo\.com\/?$/);
+  });
+});
+
+
+
+C:\workspace\js_ts\nexosd3\tests\saucedemo.spec.ts
+import { expect, test } from "@playwright/test";
+import { InventoryPage } from "../pages/InventoryPage";
+import { LoginPage } from "../pages/LoginPage";
+
+const standardUsername = process.env.SAUCEDEMO_USERNAME ?? "standard_user";
+const standardPassword = process.env.SAUCEDEMO_PASSWORD ?? "secret_sauce";
+const blockedUsername =
+  process.env.SAUCEDEMO_BLOCKED_USERNAME ?? "locked_out_user";
+
+test.describe("SauceDemo", () => {
+  let loginPage: LoginPage;
+  let inventoryPage: InventoryPage;
+
+  test.beforeEach(async ({ page }) => {
+    loginPage = new LoginPage(page);
+    inventoryPage = new InventoryPage(page);
+    await loginPage.open();
+  });
+
+  test("CP-01: inicia sesión con credenciales válidas", async ({ page }) => {
+    await loginPage.login(standardUsername, standardPassword);
+
+    await expect(page).toHaveURL(/\/inventory\.html$/);
+    await expect(inventoryPage.productList).toBeVisible();
+  });
+
+  test("CP-02: ordena y abre el producto de mayor precio", async ({ page }) => {
+    await loginPage.login(standardUsername, standardPassword);
+    await expect(inventoryPage.productList).toBeVisible();
+
+    await inventoryPage.sortByPriceHighToLow();
+    const expectedName = await inventoryPage.firstProductName();
+    const expectedPrice = await inventoryPage.firstProductPrice();
+
+    await inventoryPage.openFirstProduct();
+
+    await expect(page).toHaveURL(/\/inventory-item\.html\?id=\d+$/);
+    await expect(page.getByTestId("inventory-item-name")).toHaveText(
+      expectedName,
+    );
+    await expect(page.getByTestId("inventory-item-price")).toHaveText(
+      expectedPrice,
+    );
+  });
+
+  test("CP-03: cierra sesión correctamente", async ({ page }) => {
+    await loginPage.login(standardUsername, standardPassword);
+    await expect(inventoryPage.productList).toBeVisible();
+
+    await inventoryPage.logout();
+
+    await expect(page).toHaveURL(/saucedemo\.com\/?$/);
+    await expect(loginPage.loginButton).toBeVisible();
+  });
+
+  test("CP-04: muestra un error con una contraseña incorrecta", async ({
+    page,
+  }) => {
+    await loginPage.login(standardUsername, "cxcxcxcx");
+
+    await expect(loginPage.errorMessage).toBeVisible();
+    await expect(loginPage.errorMessage).toContainText(
+      "Epic sadface: Username and password do not match any user in this service",
+    );
+    await expect(page).toHaveURL(/saucedemo\.com\/?$/);
+  });
+
+  test("CP-05: rechaza el acceso de un usuario bloqueado", async ({ page }) => {
+    await loginPage.login(blockedUsername, standardPassword);
+
+    await expect(loginPage.errorMessage).toBeVisible();
+    await expect(loginPage.errorMessage).toContainText(
+      "Epic sadface: Sorry, this user has been locked out.",
+    );
+    await expect(page).toHaveURL(/saucedemo\.com\/?$/);
+  });
+
+  test("CP-06: solicita el usuario cuando las credenciales están vacías", async ({
+    page,
+  }) => {
+    await loginPage.login("", "");
+
+    await expect(loginPage.errorMessage).toBeVisible();
+    await expect(loginPage.errorMessage).toContainText(
+      "Epic sadface: Username is required",
+    );
+    await expect(page).toHaveURL(/saucedemo\.com\/?$/);
+  });
+
+  test("CP-08: bloquea la navegación directa a un producto tras cerrar sesión", async ({
+    page,
+  }) => {
+    await loginPage.login(standardUsername, standardPassword);
+    await expect(inventoryPage.productList).toBeVisible();
+
+    const secondTab = await page.context().newPage();
+    await secondTab.goto("/");
+
+    await inventoryPage.logout();
+    await secondTab.goto("/inventory-item.html?id=4");
+
+    await expect(secondTab).toHaveURL(/saucedemo\.com\/?$/);
+    await expect(
+      secondTab.getByRole("button", { name: "Login" }),
+    ).toBeVisible();
+  });
+});
+
+
+
+C:\workspace\js_ts\nexosd3\tests\search.spec.ts
+import { test, expect } from "@playwright/test";
+import { LoginPage } from "../pages/login.page";
+import { DashboardPage } from "../pages/dashboard.page";
+import { PdpPage } from "../pages/pdp.page";
+import { validUser } from "../data/login.data";
+
+test.describe("Feature: Search product", () => {
+  test("Scenario: Successful search product and navigate to PDP", async ({
+    page,
+  }) => {
+    const loginPage = new LoginPage(page);
+    const dashboardPage = new DashboardPage(page);
+    const pdpPage = new PdpPage(page);
+
+    await loginPage.navigateTo("https://www.saucedemo.com");
+    await loginPage.openSession(validUser.user, validUser.password);
+
+    await dashboardPage.searchProduct();
+
+    await expect(pdpPage.backProductsBtn).toBeVisible();
+    await expect(pdpPage.addCartPdpBtn).toBeVisible();
+  });
+});
+
+
+
+C:\workspace\js_ts\nexosd3\tests\seed.spec.ts
+import { test, expect } from '@playwright/test';
+
+test.describe('Test group', () => {
+  test('seed', async ({ page }) => {
+    // generate code here.
+  });
+});
+
+
+
+C:\workspace\js_ts\nexosd3\package-lock.json
+{
+  "name": "nexosd3",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "devDependencies": {
+        "@playwright/test": "^1.64.0",
+        "@types/node": "^26.6.4",
+        "typescript": "^7.0.2"
+      }
+    },
+    "node_modules/@playwright/test": {
+      "version": "1.64.0",
+      "resolved": "https://registry.npmjs.org/@playwright/test/-/test-1.64.0.tgz",
+      "integrity": "sha512-oTN9FNYuN6bqQMwiho6jJKLCG2/QOYCixGXuCjRmzOq23eODeukuY2XiAVoVpAECbuezMt1MHQjAiQxK8F+Y+g==",
+      "dev": true,
+      "license": "Apache-2.0",
+      "dependencies": {
+        "playwright": "1.64.0"
+      },
+      "bin": {
+        "playwright": "cli.js"
+      },
+      "engines": {
+        "node": ">=20"
+      }
+    },
+    "node_modules/@types/node": {
+      "version": "26.6.4",
+      "resolved": "https://registry.npmjs.org/@types/node/-/node-26.6.4.tgz",
+      "integrity": "sha512-ldVPDCzj7fsaGZrLB0NuHuTvJcsNasysBAqMolr/cgxrLd1xbqxIr3XJiPnHHJUCxj5sNF1vnRj9aWnrVh5Jcg==",
+      "dev": true,
+      "license": "MIT",
+      "dependencies": {
+        "undici-types": "~8.9.0"
+      }
+    },
+    "node_modules/@typescript/typescript-aix-ppc64": {
+      "version": "7.0.2",
+      "resolved": "https://registry.npmjs.org/@typescript/typescript-aix-ppc64/-/typescript-aix-ppc64-7.0.2.tgz",
+      "integrity": "sha512-MTKKkWB7p/0E9xi1d1tHtZ5PiLkGEMIq88pK2CubZjOsLtYTLqhgIgi6zepFa+9GHZ6h05NMCkQxGKiPXMxXtQ==",
+      "cpu": [
+        "ppc64"
+      ],
+      "dev": true,
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "aix"
+      ],
+      "engines": {
+        "node": ">=16.20.0"
+      }
+    },
+    "node_modules/@typescript/typescript-darwin-arm64": {
+      "version": "7.0.2",
+      "resolved": "https://registry.npmjs.org/@typescript/typescript-darwin-arm64/-/typescript-darwin-arm64-7.0.2.tgz",
+      "integrity": "sha512-gowzar9MwS/aRWp6f3a4KUqzRjAZjOsmGNCM6LcTgXum+dBfgsBVMN+AgvOCCbguXyick6LJhpBszxMebJ8syA==",
+      "cpu": [
+        "arm64"
+      ],
+      "dev": true,
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "darwin"
+      ],
+      "engines": {
+        "node": ">=16.20.0"
+      }
+    },
+    "node_modules/@typescript/typescript-darwin-x64": {
+      "version": "7.0.2",
+      "resolved": "https://registry.npmjs.org/@typescript/typescript-darwin-x64/-/typescript-darwin-x64-7.0.2.tgz",
+      "integrity": "sha512-SZ9xZInqApNlNGc9s0W1VSsktYSOe9cFqNOIqmN1Gs8SmkjKZYFt017G4VwPxASInODuAdbTW7sXiFUf893RgA==",
+      "cpu": [
+        "x64"
+      ],
+      "dev": true,
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "darwin"
+      ],
+      "engines": {
+        "node": ">=16.20.0"
+      }
+    },
+    "node_modules/@typescript/typescript-freebsd-arm64": {
+      "version": "7.0.2",
+      "resolved": "https://registry.npmjs.org/@typescript/typescript-freebsd-arm64/-/typescript-freebsd-arm64-7.0.2.tgz",
+      "integrity": "sha512-W5NH4y/J0plIIS5b2xvTEkU7JFxyqdMAOgf+Ilhl0vHQXKO5dZoxd+C/jEtq56c4F3wk71RB4BMRQ2XdI+bwYQ==",
+      "cpu": [
+        "arm64"
+      ],
+      "dev": true,
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "freebsd"
+      ],
+      "engines": {
+        "node": ">=16.20.0"
+      }
+    },
+    "node_modules/@typescript/typescript-freebsd-x64": {
+      "version": "7.0.2",
+      "resolved": "https://registry.npmjs.org/@typescript/typescript-freebsd-x64/-/typescript-freebsd-x64-7.0.2.tgz",
+      "integrity": "sha512-UMGDx5sTpzNw3WiPebH7l90IWfJggEd+egHt/q6p7/Cm3zqoV7VxkGXt+3DxPIw8CcmvAB0j3sVVfbhX+M4Tpw==",
+      "cpu": [
+        "x64"
+      ],
+      "dev": true,
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "freebsd"
+      ],
+      "engines": {
+        "node": ">=16.20.0"
+      }
+    },
+    "node_modules/@typescript/typescript-linux-arm": {
+      "version": "7.0.2",
+      "resolved": "https://registry.npmjs.org/@typescript/typescript-linux-arm/-/typescript-linux-arm-7.0.2.tgz",
+      "integrity": "sha512-gffT3xPz9sR7j/YJExkyPntrI0P2EP9XbOyWzth2/Gs0RstK+90RBcO0ncXoXy/beYll1SXw846Nf2zdnEz0QQ==",
+      "cpu": [
+        "arm"
+      ],
+      "dev": true,
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "engines": {
+        "node": ">=16.20.0"
+      }
+    },
+    "node_modules/@typescript/typescript-linux-arm64": {
+      "version": "7.0.2",
+      "resolved": "https://registry.npmjs.org/@typescript/typescript-linux-arm64/-/typescript-linux-arm64-7.0.2.tgz",
+      "integrity": "sha512-Qh4eU4/y3yDjnfjjyPYihMj5/ODIlmt+Bzu17OI+fiSRDW57QmU5SiN63exPRNJPKUzcc1INa1NXdrJ+MqHjUQ==",
+      "cpu": [
+        "arm64"
+      ],
+      "dev": true,
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "engines": {
+        "node": ">=16.20.0"
+      }
+    },
+    "node_modules/@typescript/typescript-linux-loong64": {
+      "version": "7.0.2",
+      "resolved": "https://registry.npmjs.org/@typescript/typescript-linux-loong64/-/typescript-linux-loong64-7.0.2.tgz",
+      "integrity": "sha512-uEHck9i8hoAzXPiYRib1O7miOnz23SxIeVl6F4LXox+qov1K35jHcEW6VHKvZI+pyvl7fZEP4MCU5LYvIq1GuQ==",
+      "cpu": [
+        "loong64"
+      ],
+      "dev": true,
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "engines": {
+        "node": ">=16.20.0"
+      }
+    },
+    "node_modules/@typescript/typescript-linux-mips64el": {
+      "version": "7.0.2",
+      "resolved": "https://registry.npmjs.org/@typescript/typescript-linux-mips64el/-/typescript-linux-mips64el-7.0.2.tgz",
+      "integrity": "sha512-R4KvAMnE43W5Qeqb0Ly56O3mWMWIAgsMyz36DCaycd5nbg/9kzm0liw3JocfRqyJY0KPmzFjbswozXyW0DnIYA==",
+      "cpu": [
+        "mips64el"
+      ],
+      "dev": true,
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "engines": {
+        "node": ">=16.20.0"
+      }
+    },
+    "node_modules/@typescript/typescript-linux-ppc64": {
+      "version": "7.0.2",
+      "resolved": "https://registry.npmjs.org/@typescript/typescript-linux-ppc64/-/typescript-linux-ppc64-7.0.2.tgz",
+      "integrity": "sha512-DORx5b3sd/4S7eayxm4FQv+A7CrkUIGRaHiwI8oiHTAI1fAPWhF4J0vAlkC8biAlHSVVwxMQ3tjZ2/DVbnQiiA==",
+      "cpu": [
+        "ppc64"
+      ],
+      "dev": true,
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "engines": {
+        "node": ">=16.20.0"
+      }
+    },
+    "node_modules/@typescript/typescript-linux-riscv64": {
+      "version": "7.0.2",
+      "resolved": "https://registry.npmjs.org/@typescript/typescript-linux-riscv64/-/typescript-linux-riscv64-7.0.2.tgz",
+      "integrity": "sha512-wf0jqEDOjrPRnKwYRyyJDRo11KMbvMFrU+q4zqKyChODBzvlkbhNQfKvLxQCcwTpdDaXSHZTVuh0JoCrKCUMHQ==",
+      "cpu": [
+        "riscv64"
+      ],
+      "dev": true,
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "engines": {
+        "node": ">=16.20.0"
+      }
+    },
+    "node_modules/@typescript/typescript-linux-s390x": {
+      "version": "7.0.2",
+      "resolved": "https://registry.npmjs.org/@typescript/typescript-linux-s390x/-/typescript-linux-s390x-7.0.2.tgz",
+      "integrity": "sha512-IkwJc3L7yhytWd/ewjyxNDfOmswCm9GWMJT/ue/dU4aZNbwZeYAetq42VyLmsmSjvoX7z74X6ZaYCtzAr0EuGw==",
+      "cpu": [
+        "s390x"
+      ],
+      "dev": true,
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "engines": {
+        "node": ">=16.20.0"
+      }
+    },
+    "node_modules/@typescript/typescript-linux-x64": {
+      "version": "7.0.2",
+      "resolved": "https://registry.npmjs.org/@typescript/typescript-linux-x64/-/typescript-linux-x64-7.0.2.tgz",
+      "integrity": "sha512-EYdf2cNg7rgCWJnxCdJ+F3V39O8ihb37eHAu1LK8oAFizgTQbPOK7zHHXbPt8rX24COqODXeI3sIf0fCXG7H/A==",
+      "cpu": [
+        "x64"
+      ],
+      "dev": true,
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "engines": {
+        "node": ">=16.20.0"
+      }
+    },
+    "node_modules/@typescript/typescript-netbsd-arm64": {
+      "version": "7.0.2",
+      "resolved": "https://registry.npmjs.org/@typescript/typescript-netbsd-arm64/-/typescript-netbsd-arm64-7.0.2.tgz",
+      "integrity": "sha512-+polYF4MF04aPpO5FTkHran9yUQDSXqy5GiSDKpsll5jy3l3+g9QLhpf39T+ePtefhXLOGrLl0QIjkQP6VnelA==",
+      "cpu": [
+        "arm64"
+      ],
+      "dev": true,
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "netbsd"
+      ],
+      "engines": {
+        "node": ">=16.20.0"
+      }
+    },
+    "node_modules/@typescript/typescript-netbsd-x64": {
+      "version": "7.0.2",
+      "resolved": "https://registry.npmjs.org/@typescript/typescript-netbsd-x64/-/typescript-netbsd-x64-7.0.2.tgz",
+      "integrity": "sha512-8YIT0EHM/3dq10ZOVF/A7pc/YSMtbcecct4rWtexrnSCHOPcpC2KTLXfTCR6vDpnSiY12heNb1GiN/wu+T/FyA==",
+      "cpu": [
+        "x64"
+      ],
+      "dev": true,
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "netbsd"
+      ],
+      "engines": {
+        "node": ">=16.20.0"
+      }
+    },
+    "node_modules/@typescript/typescript-openbsd-arm64": {
+      "version": "7.0.2",
+      "resolved": "https://registry.npmjs.org/@typescript/typescript-openbsd-arm64/-/typescript-openbsd-arm64-7.0.2.tgz",
+      "integrity": "sha512-APT8+ClYnuYm1u9+kgGXoMj2VzWzcymwh2gNSQVySHfkRDGOTVkoWLjCmOQSaO+PoqQ57B0flRp9SA+7GnnkzQ==",
+      "cpu": [
+        "arm64"
+      ],
+      "dev": true,
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "openbsd"
+      ],
+      "engines": {
+        "node": ">=16.20.0"
+      }
+    },
+    "node_modules/@typescript/typescript-openbsd-x64": {
+      "version": "7.0.2",
+      "resolved": "https://registry.npmjs.org/@typescript/typescript-openbsd-x64/-/typescript-openbsd-x64-7.0.2.tgz",
+      "integrity": "sha512-yX7s+Q0Dln0Dt9tEzZsAjXXR/+ytBM7AlglaqyeMPxQszJ1JhlJdZ6jLA+IzldHtflX81em7lDao1xXu+aRRkg==",
+      "cpu": [
+        "x64"
+      ],
+      "dev": true,
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "openbsd"
+      ],
+      "engines": {
+        "node": ">=16.20.0"
+      }
+    },
+    "node_modules/@typescript/typescript-sunos-x64": {
+      "version": "7.0.2",
+      "resolved": "https://registry.npmjs.org/@typescript/typescript-sunos-x64/-/typescript-sunos-x64-7.0.2.tgz",
+      "integrity": "sha512-dLJDGaLZ1D4HPQn62u1n8mBDkJREwMsAkCdkwd4Ieqw+x3TUyTsqY0YiBCtE6H6OzzgGk3iuZ3vFWRS+E8/d1g==",
+      "cpu": [
+        "x64"
+      ],
+      "dev": true,
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "sunos"
+      ],
+      "engines": {
+        "node": ">=16.20.0"
+      }
+    },
+    "node_modules/@typescript/typescript-win32-arm64": {
+      "version": "7.0.2",
+      "resolved": "https://registry.npmjs.org/@typescript/typescript-win32-arm64/-/typescript-win32-arm64-7.0.2.tgz",
+      "integrity": "sha512-Gyl1Vy6OsWesLzmq+EP0Fb7b4Nid5232AvcA2SFcdYreldpNtYFFofPjnt62y9hQy7VTaZp65ICJjuAQRaVcIQ==",
+      "cpu": [
+        "arm64"
+      ],
+      "dev": true,
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "win32"
+      ],
+      "engines": {
+        "node": ">=16.20.0"
+      }
+    },
+    "node_modules/@typescript/typescript-win32-x64": {
+      "version": "7.0.2",
+      "resolved": "https://registry.npmjs.org/@typescript/typescript-win32-x64/-/typescript-win32-x64-7.0.2.tgz",
+      "integrity": "sha512-0BQ3HkAHHlKLSp1qRvf3SUhGpGsDuhB/jgFw75guyqbxJqEaS0Cw/VFO8i2nHglJUzQCRtMMR/IBAKE3ETMC4g==",
+      "cpu": [
+        "x64"
+      ],
+      "dev": true,
+      "license": "Apache-2.0",
+      "optional": true,
+      "os": [
+        "win32"
+      ],
+      "engines": {
+        "node": ">=16.20.0"
+      }
+    },
+    "node_modules/playwright": {
+      "version": "1.64.0",
+      "resolved": "https://registry.npmjs.org/playwright/-/playwright-1.64.0.tgz",
+      "integrity": "sha512-kVzTnYFYEyQ9RGzBjNCd2+yEqWmVbxl3AHPynv3qQ6JTjv4a+kwRcnqQwIpuP3NnrnIrE/Q6wWAIAvMfIE2/Yg==",
+      "dev": true,
+      "license": "Apache-2.0",
+      "dependencies": {
+        "playwright-core": "1.64.0"
+      },
+      "bin": {
+        "playwright": "cli.js"
+      },
+      "engines": {
+        "node": ">=20"
+      }
+    },
+    "node_modules/playwright-core": {
+      "version": "1.64.0",
+      "resolved": "https://registry.npmjs.org/playwright-core/-/playwright-core-1.64.0.tgz",
+      "integrity": "sha512-T9r+MZkTECl2+oUcZ26YgZzTrYidTsIhYYkJix+6iDOymOb1FB2RLLSOxRGnZGv5DStt+aduIVbt+E8WygXYpg==",
+      "dev": true,
+      "license": "Apache-2.0",
+      "bin": {
+        "playwright-core": "cli.js"
+      },
+      "engines": {
+        "node": ">=20"
+      }
+    },
+    "node_modules/typescript": {
+      "version": "7.0.2",
+      "resolved": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz",
+      "integrity": "sha512-8FYau96o3NKOhbjKi/qNvG/W5jhzxkbdm5sj9AbZ/5T5sWqn3hJgLfGx27sRKZWTvyzCP8dLRBTf5tBTSRVUNA==",
+      "dev": true,
+      "license": "Apache-2.0",
+      "bin": {
+        "tsc": "bin/tsc"
+      },
+      "engines": {
+        "node": ">=16.20.0"
+      },
+      "optionalDependencies": {
+        "@typescript/typescript-aix-ppc64": "7.0.2",
+        "@typescript/typescript-darwin-arm64": "7.0.2",
+        "@typescript/typescript-darwin-x64": "7.0.2",
+        "@typescript/typescript-freebsd-arm64": "7.0.2",
+        "@typescript/typescript-freebsd-x64": "7.0.2",
+        "@typescript/typescript-linux-arm": "7.0.2",
+        "@typescript/typescript-linux-arm64": "7.0.2",
+        "@typescript/typescript-linux-loong64": "7.0.2",
+        "@typescript/typescript-linux-mips64el": "7.0.2",
+        "@typescript/typescript-linux-ppc64": "7.0.2",
+        "@typescript/typescript-linux-riscv64": "7.0.2",
+        "@typescript/typescript-linux-s390x": "7.0.2",
+        "@typescript/typescript-linux-x64": "7.0.2",
+        "@typescript/typescript-netbsd-arm64": "7.0.2",
+        "@typescript/typescript-netbsd-x64": "7.0.2",
+        "@typescript/typescript-openbsd-arm64": "7.0.2",
+        "@typescript/typescript-openbsd-x64": "7.0.2",
+        "@typescript/typescript-sunos-x64": "7.0.2",
+        "@typescript/typescript-win32-arm64": "7.0.2",
+        "@typescript/typescript-win32-x64": "7.0.2"
+      }
+    },
+    "node_modules/undici-types": {
+      "version": "8.9.0",
+      "resolved": "https://registry.npmjs.org/undici-types/-/undici-types-8.9.0.tgz",
+      "integrity": "sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==",
+      "dev": true,
+      "license": "MIT"
+    }
+  }
+}
+
+
+
+C:\workspace\js_ts\nexosd3\package.json
+{
+  "devDependencies": {
+    "@playwright/test": "^1.64.0",
+    "@types/node": "^26.6.4",
+    "typescript": "^7.0.2"
+  },
+  "scripts": {}
+}
+
+
+
+C:\workspace\js_ts\nexosd3\playwright.config.ts
+import { defineConfig, devices } from "@playwright/test";
+
+export default defineConfig({
+  testDir: "./tests",
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 1 : undefined,
+  reporter: [["html", { open: "never" }], ["list"]],
+  use: {
+    baseURL: "https://www.saucedemo.com/", // Cambiar por tu ambiente QA/sandbox
+    testIdAttribute: "data-test",
+    trace: "on", // Mantiene el trace ante reintentos o fallos ('on' para forzar siempre)
+    screenshot: "only-on-failure", // Captura pantalla automáticamente si falla el test
+    video: "retain-on-failure",
+  },
+  projects: [
+    {
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "firefox",
+      use: { ...devices["Desktop Firefox"] },
+    },
+  ],
+});
+
+
+

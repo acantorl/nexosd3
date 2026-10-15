@@ -4,5 +4,7 @@
     "@types/node": "^26.6.4",
     "typescript": "^7.0.2"
   },
-  "scripts": {}
+  "scripts": {
+    "test": "playwright test --workers=1"
+  }
 }

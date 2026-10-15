@@ -13,7 +13,9 @@ export class LoginPage extends BasePage {
     super(page);
     this.usernameInput = page.getByPlaceholder("Username");
     this.passwordInput = page.getByPlaceholder("Password");
+
     this.loginButton = page.getByRole("button", { name: "Login" });
+
     this.errorMessage = page.getByTestId("error");
     this.dismissErrorButton = page.getByTestId("error-button");
     this.titleSpan = page.getByTestId("title");
